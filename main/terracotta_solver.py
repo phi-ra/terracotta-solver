@@ -101,6 +101,51 @@ class TerraCottaSolver():
         solve(0, puzzle_class, available_stack)
 
 
+def prepare_dicts(seed_=42):
+
+    all_pieces = []
+
+    for ii in range(4):
+        for ij in range(4):
+            for ji in range(4):
+                for jj in range(4):
+                    all_pieces.append(np.array([[ii, ij], [ji,jj]]))
+
+    random.Random(seed_).shuffle(all_pieces)
+    pieces_dictionary = dict(zip(range(256), all_pieces))
+
+    rotation_dict = {}
+    idx_ = 0
+    for piece_index, piece_ in pieces_dictionary.items():
+        piece_rot_prep = deepcopy(piece_)
+        rot_cousins = []
+        rot_cousins.append(piece_.tolist())
+        for rot_ in np.arange(1,4):
+            piece_rot_prep = piece_rot_prep + 1
+            piece_rot_prep[piece_rot_prep == 4] = np.repeat(0, len(piece_rot_prep[piece_rot_prep == 4]))
+            rot_cousins.append(np.rot90(piece_rot_prep, k=rot_).tolist())
+
+        empty_ = [k for k,v in groupby(sorted(rot_cousins))]
+
+        rotation_dict[piece_index] = [np.array(ar_) for ar_ in empty_]
+        idx_ += 1
+
+    # Get the "cousins"
+    cousin_dictionary = {}
+    for check_idx in range(256):
+        rel_array = pieces_dictionary[check_idx]
+        cousin_pieces = []
+        for lookup_index in range(256):
+            if np.any([np.all(rel_array == k_) for k_ in rotation_dict[lookup_index]]):
+                cousin_pieces.append(lookup_index)
+                
+        cousin_dictionary[check_idx] = cousin_pieces
+
+
+    return all_pieces, pieces_dictionary, cousin_dictionary
+
+
+
 if __name__ == "__main__":
     # Create all pieces
     all_pieces = []
